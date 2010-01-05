@@ -254,7 +254,15 @@ class RequestHandler(object):
         if not value: return None
         parts = value.split("|")
         if len(parts) != 3: return None
-        if self._cookie_signature(parts[0], parts[1]) != parts[2]:
+        mac = self._cookie_signature(parts[0], parts[1])
+        sig = parts[2]
+        if len(mac) != len(sig):
+            logging.warning("Invalid cookie signature %r", value)
+            return None
+        retval = 0
+        for x, y in zip(mac, sig):
+            retval |= ord(x) ^ ord(y)
+        if (retval != 0):
             logging.warning("Invalid cookie signature %r", value)
             return None
         timestamp = int(parts[1])
